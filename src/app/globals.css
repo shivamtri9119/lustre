@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand */
+  --ink: #111111;
+  --ink-soft: #2a2a2a;
+  --gold: #d4af37;
+  --gold-deep: #ad8a26;
+  --bg: #f8f8f8;
+  --card: #ffffff;
+  --ivory: #fcfaf6;
+  --line: #e7e4dd;
+  --muted: #6b6b6b;
+  --muted-soft: #8c8c8c;
+
+  /* Status */
+  --status-pending-fg: #92660b;
+  --status-pending-bg: #fcf1d8;
+  --status-confirmed-fg: #1d5b8c;
+  --status-confirmed-bg: #e5eff7;
+  --status-completed-fg: #2f6f4e;
+  --status-completed-bg: #e9f3ed;
+  --status-cancelled-fg: #a8412b;
+  --status-cancelled-bg: #fbeae5;
+
+  --radius: 0.875rem;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-ivory: var(--ivory);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+
+  --color-pending-fg: var(--status-pending-fg);
+  --color-pending-bg: var(--status-pending-bg);
+  --color-confirmed-fg: var(--status-confirmed-fg);
+  --color-confirmed-bg: var(--status-confirmed-bg);
+  --color-completed-fg: var(--status-completed-fg);
+  --color-completed-bg: var(--status-completed-bg);
+  --color-cancelled-fg: var(--status-cancelled-fg);
+  --color-cancelled-bg: var(--status-cancelled-bg);
+
+  --font-display: var(--font-poppins);
+  --font-sans: var(--font-inter);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 6px);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+* {
+  border-color: var(--line);
+}
+
+/* Signature element: the "cut line" — a precise drawn gold rule used under
+   section eyebrows and as the active-state marker in navigation. */
+.cut-line {
+  position: relative;
+  display: inline-block;
+}
+.cut-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  height: 2px;
+  width: 28px;
+  background: var(--gold);
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-draw {
+    animation: draw-line 0.7s ease-out forwards;
+  }
+}
+
+@keyframes draw-line {
+  from {
+    width: 0;
+  }
+  to {
+    width: 28px;
+  }
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-area,
+  #print-area * {
+    visibility: visible;
+  }
+  #print-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+  }
+}
