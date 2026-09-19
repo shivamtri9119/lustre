@@ -43,6 +43,7 @@ export async function POST(req: Request) {
         salonId: session.salonId,
         plan,
         status: "ACTIVE",
+        isTrial: false,
         currentPeriodEnd,
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
@@ -50,6 +51,7 @@ export async function POST(req: Request) {
       update: {
         plan,
         status: "ACTIVE",
+        isTrial: false,
         currentPeriodEnd,
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
@@ -64,3 +66,4 @@ export async function POST(req: Request) {
     return handleApiError(err);
   }
 }
+
