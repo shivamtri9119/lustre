@@ -31,6 +31,7 @@ const PROTECTED_PREFIXES = [
   "/inventory",
   "/analytics",
   "/subscribe",
+  "/onboarding",
 ];
 
 /**
