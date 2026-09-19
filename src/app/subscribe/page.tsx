@@ -14,7 +14,16 @@ const brandPoints = [
 export default async function SubscribePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (!session.user.salonId) redirect("/login?error=NoSalon");
+  if (!session.user.salonId) {
+    if (
+      session.user.role === "CUSTOMER" &&
+      !session.user.customerId &&
+      !session.user.staffId
+    ) {
+      redirect("/onboarding");
+    }
+    redirect("/login?error=NoSalon");
+  }
 
   const subscription = await getSubscriptionState(session.user.salonId);
   if (subscription.active) redirect("/dashboard");
@@ -64,6 +73,7 @@ export default async function SubscribePage() {
           ownerName={owner?.name ?? null}
           ownerEmail={owner?.email ?? null}
           hadPreviousPlan={subscription.plan !== null}
+          trialEnded={subscription.trial}
         />
       </div>
     </div>
