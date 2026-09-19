@@ -23,10 +23,16 @@ export default async function DashboardLayout({
     redirect("/login");
   }
   if (!session.user.salonId) {
-    // A Google sign-in that hasn't completed salon onboarding yet. There's
-    // no onboarding wizard built yet (see the summary) — bounce to login
-    // with a message rather than rendering a dashboard for a salon that
-    // doesn't exist.
+    // A brand-new Google sign-up (the adapter's default CUSTOMER role, no
+    // staff/customer link) hasn't created its salon yet — send it to
+    // onboarding. Anyone else without a salon has nothing to onboard into.
+    if (
+      session.user.role === "CUSTOMER" &&
+      !session.user.customerId &&
+      !session.user.staffId
+    ) {
+      redirect("/onboarding");
+    }
     redirect("/login?error=NoSalon");
   }
 
