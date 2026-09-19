@@ -1,6 +1,6 @@
 import type { DefaultSession } from "next-auth";
 import type { Role } from "@prisma/client";
-
+ 
 // Adds the tenant/role fields Lustre needs onto Auth.js's Session/User/JWT
 // types. Without this, `session.user.salonId` etc. don't type-check.
 declare module "next-auth" {
@@ -14,7 +14,7 @@ declare module "next-auth" {
       customerId: string | null;
     } & DefaultSession["user"];
   }
-
+ 
   interface User {
     role: Role;
     salonId: string | null;
@@ -23,8 +23,8 @@ declare module "next-auth" {
     customerId?: string | null;
   }
 }
-
-declare module "next-auth/jwt" {
+ 
+declare module "@auth/core/jwt" {
   interface JWT {
     role: Role;
     salonId: string | null;
