@@ -61,7 +61,8 @@ export function Topbar({ subscription }: { subscription?: SubscriptionState }) {
       {role === "OWNER" && subscription?.currentPeriodEnd && (
         <span className="hidden items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-xs text-muted md:inline-flex">
           <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-          Renews {formatRenewalDate(subscription.currentPeriodEnd)}
+          {subscription.trial ? "Free trial ends" : "Renews"}{" "}
+          {formatRenewalDate(subscription.currentPeriodEnd)}
         </span>
       )}
 
