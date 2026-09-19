@@ -140,6 +140,10 @@ model User {
   id            String    @id @default(cuid())
   name          String
   email         String    @unique
+  // Auth.js Prisma adapter writes these two on every OAuth sign-in; the
+  // adapter throws "Unknown argument `image`" if either column is missing.
+  emailVerified DateTime?
+  image         String?
   passwordHash  String? // null when the account only uses Google OAuth
   // Defaults to CUSTOMER because the Auth.js Prisma adapter creates this
   // row itself on a brand-new OAuth (Google) sign-in and only populates
