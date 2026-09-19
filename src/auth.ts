@@ -83,7 +83,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         // Fresh sign-in via Credentials — `user` is exactly what
         // `authorize` returned above.
@@ -92,11 +92,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.salonName = user.salonName ?? null;
         token.staffId = user.staffId ?? null;
         token.customerId = user.customerId ?? null;
-      } else if (token.email && token.role === undefined) {
+      } else if (token.email && (token.role === undefined || trigger === "update")) {
         // Fresh sign-in via Google: the adapter already wrote the User row
         // (see schema.prisma's User.role @default(CUSTOMER) note) before
         // this callback runs. Hydrate the token from it once; every later
         // request reuses the token without hitting the DB again.
+        //
+        // Also re-runs when the client calls session.update(): the
+        // onboarding form does that right after creating the salon, so the
+        // token picks up the new OWNER role and salonId without a second
+        // login. Nothing from the client is trusted — values always come
+        // from the database.
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
           include: { salon: { select: { name: true } } },
