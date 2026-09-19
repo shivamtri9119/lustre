@@ -140,16 +140,16 @@ export function SubscribeClient({
   return (
     <div className="w-full max-w-md">
       <h1 className="font-display text-2xl font-semibold text-ink">
-        {trialEnded
-          ? "Your free trial has ended"
-          : hadPreviousPlan
-            ? "Renew your subscription"
-            : "Activate your subscription"}
+           {trialEnded
+     ? "Your free trial has ended"
+     : hadPreviousPlan
+       ? "Renew your subscription"
+       : "Activate your subscription"}
       </h1>
       <p className="mt-2 text-sm text-muted">
-        {trialEnded
-          ? "Pick a plan to keep your bookings, customers and invoices running."
-          : "One plan, everything included. Pick monthly or yearly."}
+           {trialEnded
+     ? "Pick a plan to keep your bookings, customers and invoices running."
+     : "One plan, everything included. Pick monthly or yearly."}
       </p>
 
       <div className="mt-6 inline-flex rounded-lg border border-line bg-card p-1">
