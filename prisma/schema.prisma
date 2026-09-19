@@ -126,6 +126,9 @@ model Subscription {
   plan              SubscriptionPlan
   status            SubscriptionStatus @default(ACTIVE)
   currentPeriodEnd  DateTime
+  // true while the salon is on the free trial (no payment yet). Flipped to
+  // false by /api/billing/verify the moment a real payment is verified.
+  isTrial           Boolean            @default(false)
   razorpayOrderId   String?
   razorpayPaymentId String?
   createdAt         DateTime           @default(now())
