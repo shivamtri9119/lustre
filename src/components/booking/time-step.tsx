@@ -10,11 +10,13 @@ interface Slot {
 }
 
 export function TimeStep({
+  salonSlug,
   staff,
   serviceId,
   date,
   onSelect,
 }: {
+  salonSlug: string;
   staff: PublicStaff;
   serviceId: string;
   date: string;
@@ -25,7 +27,7 @@ export function TimeStep({
 
   useEffect(() => {
     let cancelled = false;
-    const params = new URLSearchParams({ serviceId, staffId: staff.id, date });
+    const params = new URLSearchParams({ salon: salonSlug, serviceId, staffId: staff.id, date });
     fetch(`/api/public/availability?${params.toString()}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
@@ -37,7 +39,7 @@ export function TimeStep({
     return () => {
       cancelled = true;
     };
-  }, [staff.id, serviceId, date]);
+  }, [salonSlug, staff.id, serviceId, date]);
 
   return (
     <div>

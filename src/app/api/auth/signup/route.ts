@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { generateUniqueSlug } from "@/lib/slug";
 import { prisma } from "@/lib/prisma";
 import { handleApiError, RateLimitedError } from "@/lib/session-guard";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
@@ -63,9 +64,11 @@ export async function POST(req: Request) {
     const passwordHash = await bcrypt.hash(password, 12);
 
     const user = await prisma.$transaction(async (tx) => {
+      const slug = await generateUniqueSlug(tx, salonName);
       const salon = await tx.salon.create({
         data: {
           name: salonName,
+          slug,
           address: "",
           phone: "",
           email,

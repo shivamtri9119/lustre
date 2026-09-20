@@ -7,8 +7,10 @@ import { cn } from "@/lib/utils";
 import type { PublicService } from "@/lib/types";
 
 export function ServiceStep({
+  salonSlug,
   onSelect,
 }: {
+  salonSlug: string;
   onSelect: (service: PublicService) => void;
 }) {
   const [services, setServices] = useState<PublicService[] | null>(null);
@@ -16,7 +18,7 @@ export function ServiceStep({
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/public/services")
+    fetch(`/api/public/services?salon=${encodeURIComponent(salonSlug)}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
         if (!cancelled) setServices(data);
@@ -27,7 +29,7 @@ export function ServiceStep({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [salonSlug]);
 
   if (error) {
     return (

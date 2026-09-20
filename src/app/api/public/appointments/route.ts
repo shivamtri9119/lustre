@@ -25,6 +25,8 @@ const MAX_DAYS_AHEAD = 90;
 // note below), and the conflict check re-runs against live data
 // server-side rather than trusting whatever slot the client last saw.
 const bookingSchema = z.object({
+  // Which salon's booking page this came from (the slug in /book/<slug>).
+  salonSlug: z.string().trim().min(1).max(60),
   serviceId: z.string().min(1),
   staffId: z.string().min(1),
   date: z.string().regex(dateRegex),
@@ -66,7 +68,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const salon = await getPublicSalon();
+    const salon = await getPublicSalon(input.salonSlug);
     if (!salon) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     // Re-verify service and staff belong to THIS salon, and that this

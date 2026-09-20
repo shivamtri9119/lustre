@@ -18,7 +18,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "serviceId is required" }, { status: 400 });
     }
 
-    const salon = await getPublicSalon();
+    const salon = await getPublicSalon(searchParams.get("salon"));
     if (!salon) return NextResponse.json([]);
 
     // Confirms the service belongs to this salon before using it to filter

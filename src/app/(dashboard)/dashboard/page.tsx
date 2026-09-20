@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { IndianRupee, CalendarCheck, Users, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { BookingLinkCard } from "@/components/dashboard/booking-link-card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { RevenueChart } from "@/components/dashboard/revenue-chart";
 import { StaffPerformance } from "@/components/dashboard/staff-performance";
@@ -52,6 +53,8 @@ export default function DashboardPage() {
         title={`Good to see you, ${(session?.user?.name ?? "").split(" ")[0]}`}
         description={`${todayLabel} · ${session?.user?.salonName ?? "Lustre"}`}
       />
+
+      <BookingLinkCard />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

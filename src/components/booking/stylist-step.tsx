@@ -8,9 +8,11 @@ import { initials, colorFromId } from "@/lib/utils";
 import type { PublicService, PublicStaff } from "@/lib/types";
 
 export function StylistStep({
+  salonSlug,
   service,
   onSelect,
 }: {
+  salonSlug: string;
   service: PublicService;
   onSelect: (staff: PublicStaff) => void;
 }) {
@@ -19,7 +21,9 @@ export function StylistStep({
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/public/staff?serviceId=${encodeURIComponent(service.id)}`)
+    fetch(
+      `/api/public/staff?salon=${encodeURIComponent(salonSlug)}&serviceId=${encodeURIComponent(service.id)}`
+    )
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
         if (!cancelled) setStaff(data);
@@ -30,7 +34,7 @@ export function StylistStep({
     return () => {
       cancelled = true;
     };
-  }, [service.id]);
+  }, [salonSlug, service.id]);
 
   if (error) {
     return (

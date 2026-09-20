@@ -85,6 +85,10 @@ enum NotificationStatus {
 model Salon {
   id        String   @id @default(cuid())
   name      String
+  // The salon's own public booking link: /book/<slug>. Nullable so salons
+  // created before this column existed keep working; they get one the first
+  // time the owner opens the dashboard (see ensureSalonSlug).
+  slug      String?  @unique
   address   String
   phone     String
   email     String

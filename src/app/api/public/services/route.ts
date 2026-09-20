@@ -7,9 +7,9 @@ import { getPublicSalon } from "@/lib/public-salon";
 // staff-only GET /api/services. Returns only what an anonymous booking
 // visitor needs (name/category/duration/price) — no salonId, no internal
 // ids beyond the service's own, nothing staff-only.
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const salon = await getPublicSalon();
+    const salon = await getPublicSalon(new URL(req.url).searchParams.get("salon"));
     if (!salon) return NextResponse.json([]);
 
     const services = await prisma.service.findMany({

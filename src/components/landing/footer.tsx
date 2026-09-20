@@ -17,7 +17,7 @@ export function Footer() {
               <p className="font-medium text-white">Product</p>
               <Link href="#features" className="block text-white/60 hover:text-white">Features</Link>
               <Link href="#pricing" className="block text-white/60 hover:text-white">Pricing</Link>
-              <Link href="/book" className="block text-white/60 hover:text-white">Online booking</Link>
+              <Link href="/#features" className="block text-white/60 hover:text-white">Online booking</Link>
             </div>
             <div className="space-y-2">
               <p className="font-medium text-white">Company</p>

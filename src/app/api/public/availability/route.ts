@@ -41,7 +41,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Date is in the past" }, { status: 400 });
     }
 
-    const salon = await getPublicSalon();
+    const salon = await getPublicSalon(searchParams.get("salon"));
     if (!salon) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const [service, staff] = await Promise.all([
