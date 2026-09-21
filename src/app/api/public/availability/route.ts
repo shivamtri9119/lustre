@@ -41,7 +41,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Date is in the past" }, { status: 400 });
     }
 
-    const salon = await getPublicSalon(searchParams.get("salon"));
+    const salon = await getPublicSalon();
     if (!salon) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const [service, staff] = await Promise.all([
@@ -59,7 +59,12 @@ export async function GET(req: Request) {
       select: { id: true, time: true, durationMinutes: true },
     });
 
-    const slots = getAvailableSlots(existing, service.durationMinutes);
+    const slots = getAvailableSlots(
+      existing,
+      service.durationMinutes,
+      staff.workStartMinutes,
+      staff.workEndMinutes
+    );
     return NextResponse.json(slots.map((s) => ({ value: s.value, label: s.label })));
   } catch (err) {
     return handleApiError(err);
