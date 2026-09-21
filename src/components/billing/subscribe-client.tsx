@@ -226,7 +226,7 @@ export function SubscribeClient({
         </p>
       </div>
 
-      
+      <a
         href="/api/account/export"
         download
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-card py-2.5 text-sm font-medium text-ink-soft transition-colors hover:border-gold-deep hover:text-ink"
