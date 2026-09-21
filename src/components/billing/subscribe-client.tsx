@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, ShieldCheck, Loader2 } from "lucide-react";
+import { Check, ShieldCheck, Loader2, Download, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -38,13 +38,13 @@ export function SubscribeClient({
   ownerName,
   ownerEmail,
   hadPreviousPlan,
-  trialEnded,
+  daysUntilDeletion,
 }: {
   isOwner: boolean;
   ownerName: string | null;
   ownerEmail: string | null;
   hadPreviousPlan: boolean;
-  trialEnded: boolean;
+  daysUntilDeletion: number | null;
 }) {
   const router = useRouter();
   const [plan, setPlan] = useState<Plan>("YEARLY");
@@ -140,17 +140,22 @@ export function SubscribeClient({
   return (
     <div className="w-full max-w-md">
       <h1 className="font-display text-2xl font-semibold text-ink">
-           {trialEnded
-     ? "Your free trial has ended"
-     : hadPreviousPlan
-       ? "Renew your subscription"
-       : "Activate your subscription"}
+        {hadPreviousPlan ? "Renew your subscription" : "Activate your subscription"}
       </h1>
       <p className="mt-2 text-sm text-muted">
-           {trialEnded
-     ? "Pick a plan to keep your bookings, customers and invoices running."
-     : "One plan, everything included. Pick monthly or yearly."}
+        One plan, everything included. Pick monthly or yearly.
       </p>
+
+      {daysUntilDeletion !== null && daysUntilDeletion <= 30 && (
+        <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-cancelled-fg/30 bg-cancelled-bg px-3.5 py-3 text-sm text-cancelled-fg">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            {daysUntilDeletion <= 0
+              ? "Your data is scheduled for deletion very soon — download it now if you want to keep it."
+              : `Your salon's data will be permanently deleted in ${daysUntilDeletion} day${daysUntilDeletion === 1 ? "" : "s"} if this stays unpaid. Download a copy below any time before then.`}
+          </p>
+        </div>
+      )}
 
       <div className="mt-6 inline-flex rounded-lg border border-line bg-card p-1">
         {(["MONTHLY", "YEARLY"] as const).map((p) => (
@@ -220,6 +225,18 @@ export function SubscribeClient({
           Secured by Razorpay — cards, UPI, and netbanking accepted
         </p>
       </div>
+
+      
+        href="/api/account/export"
+        download
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-card py-2.5 text-sm font-medium text-ink-soft transition-colors hover:border-gold-deep hover:text-ink"
+      >
+        <Download className="h-4 w-4" />
+        Download all your data
+      </a>
+      <p className="mt-2 text-center text-xs text-muted-soft">
+        Customers, appointments, invoices, and inventory — a full copy, whether or not you renew.
+      </p>
     </div>
   );
 }
