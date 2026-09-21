@@ -120,8 +120,14 @@ export function NewAppointmentDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError(null);
-    if (!service || !staffId) return;
-    if (customerId === NEW_CUSTOMER ? !newName || !newPhone : !customerId) return;
+    if (customerId === NEW_CUSTOMER ? !newName || !newPhone : !customerId) {
+      setFormError("Choose a customer, or add a new one.");
+      return;
+    }
+    if (!service || !staffId) {
+      setFormError("Choose a service and a stylist first.");
+      return;
+    }
 
     setSubmitting(true);
     const input: NewAppointmentInput = {
@@ -234,6 +240,17 @@ export function NewAppointmentDialog({
               </Select>
             </div>
           </div>
+
+          {!optionsLoading && services.length === 0 && (
+            <p className="rounded-md border border-dashed border-line px-3 py-2 text-xs text-muted">
+              You haven&apos;t added any services yet. Add them on the Services page first.
+            </p>
+          )}
+          {!optionsLoading && service && eligibleStaff.length === 0 && (
+            <p className="rounded-md border border-dashed border-line px-3 py-2 text-xs text-muted">
+              No staff are assigned to {service.name} yet. Assign someone on the Services or Staff page.
+            </p>
+          )}
 
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">

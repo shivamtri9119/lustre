@@ -26,6 +26,26 @@ export interface Staff {
   status: "ACTIVE" | "ON_LEAVE";
 }
 
+// A staff row as returned by GET /api/staff: the salon's real team, with
+// this month's numbers computed from its actual appointments. (`Staff`
+// above is the older shape the sample data and some charts still use.)
+export interface StaffMember {
+  id: string;
+  name: string;
+  role: string;
+  phone: string;
+  email: string;
+  workingHours: string;
+  skills: string[];
+  rating: number;
+  commissionRate: number; // percent
+  status: "ACTIVE" | "ON_LEAVE";
+  avatarColor: string;
+  assignedServiceIds: string[];
+  bookingsThisMonth: number; // not cancelled
+  revenueGenerated: number; // completed appointments this month
+}
+
 export interface Service {
   id: string;
   name: string;

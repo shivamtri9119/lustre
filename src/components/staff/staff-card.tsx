@@ -1,10 +1,9 @@
 "use client";
 
-import { Star, Clock } from "lucide-react";
+import { Star, Clock, MoreHorizontal } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -12,18 +11,24 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
 import { initials, formatCurrency } from "@/lib/utils";
-import type { Staff } from "@/lib/types";
+import type { StaffMember } from "@/lib/types";
 
 export function StaffCard({
   staff,
+  canEdit,
+  onEdit,
   onToggleStatus,
+  onRemove,
 }: {
-  staff: Staff;
-  onToggleStatus: (id: string) => void;
+  staff: StaffMember;
+  canEdit: boolean;
+  onEdit: (staff: StaffMember) => void;
+  onToggleStatus: (staff: StaffMember) => void;
+  onRemove: (staff: StaffMember) => void;
 }) {
   const commission = Math.round(staff.revenueGenerated * (staff.commissionRate / 100));
+  const serviceCount = staff.assignedServiceIds.length;
 
   return (
     <Card className="p-5">
@@ -39,23 +44,22 @@ export function StaffCard({
             <p className="text-xs text-muted">{staff.role}</p>
           </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onToggleStatus(staff.id)}>
-              {staff.status === "ACTIVE" ? "Mark on leave" : "Mark active"}
-            </DropdownMenuItem>
-            {/* "View performance report" used to be here with no onClick —
-                a menu item that did nothing when clicked. Removed rather
-                than left as a dead affordance; a real performance view
-                needs invoices/appointments data actually aggregated by
-                staff, which isn't built yet (see the summary). */}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {canEdit && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label={`Actions for ${staff.name}`}>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(staff)}>Edit details</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onToggleStatus(staff)}>
+                {staff.status === "ACTIVE" ? "Mark on leave" : "Mark active"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onRemove(staff)}>Remove</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <div className="mt-4 flex items-center justify-between text-xs">
@@ -73,23 +77,31 @@ export function StaffCard({
         {staff.workingHours}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {staff.skills.map((skill) => (
-          <Badge key={skill} variant="outline">
-            {skill}
-          </Badge>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <div className="flex items-center justify-between text-xs text-muted">
-          <span>Utilization</span>
-          <span>{staff.utilization}%</span>
+      {staff.skills.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {staff.skills.map((skill) => (
+            <Badge key={skill} variant="outline">
+              {skill}
+            </Badge>
+          ))}
         </div>
-        <Progress value={staff.utilization} className="mt-1.5" />
+      )}
+
+      <div className="mt-3 text-xs">
+        {serviceCount === 0 ? (
+          <Badge variant="pending">No services assigned — can&apos;t be booked</Badge>
+        ) : (
+          <span className="text-muted">
+            Performs {serviceCount} {serviceCount === 1 ? "service" : "services"}
+          </span>
+        )}
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3 text-sm">
+      <div className="mt-4 grid grid-cols-3 gap-3 border-t border-line pt-3 text-sm">
+        <div>
+          <p className="text-xs text-muted">Bookings (mo.)</p>
+          <p className="font-display font-semibold text-ink">{staff.bookingsThisMonth}</p>
+        </div>
         <div>
           <p className="text-xs text-muted">Revenue (mo.)</p>
           <p className="font-display font-semibold text-ink">{formatCurrency(staff.revenueGenerated)}</p>
