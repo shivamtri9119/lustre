@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getSubscriptionState } from "@/lib/subscription";
+import { getSubscriptionState, INACTIVITY_DELETION_DAYS } from "@/lib/subscription";
 import { SubscribeClient } from "@/components/billing/subscribe-client";
 import { Logo } from "@/components/landing/navbar";
 
@@ -14,30 +14,31 @@ const brandPoints = [
 export default async function SubscribePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  if (!session.user.salonId) {
-    if (
-      session.user.role === "CUSTOMER" &&
-      !session.user.customerId &&
-      !session.user.staffId
-    ) {
-      redirect("/onboarding");
-    }
-    redirect("/login?error=NoSalon");
-  }
+  if (!session.user.salonId) redirect("/login?error=NoSalon");
 
   const subscription = await getSubscriptionState(session.user.salonId);
   if (subscription.active) redirect("/dashboard");
 
   const isOwner = session.user.role === "OWNER";
 
-  // Non-owner roles can't pay — show them who to ask instead of a
-  // payment form they have no way to complete.
   const owner = isOwner
     ? null
     : await prisma.user.findFirst({
         where: { salonId: session.user.salonId, role: "OWNER" },
         select: { name: true, email: true },
       });
+
+  let daysUntilDeletion: number | null = null;
+  if (isOwner) {
+    const salon = await prisma.salon.findUnique({
+      where: { id: session.user.salonId },
+      select: { createdAt: true },
+    });
+    const anchor = subscription.currentPeriodEnd ?? salon?.createdAt ?? new Date();
+    const deletionDate = new Date(anchor);
+    deletionDate.setDate(deletionDate.getDate() + INACTIVITY_DELETION_DAYS);
+    daysUntilDeletion = Math.ceil((deletionDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  }
 
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
@@ -73,7 +74,7 @@ export default async function SubscribePage() {
           ownerName={owner?.name ?? null}
           ownerEmail={owner?.email ?? null}
           hadPreviousPlan={subscription.plan !== null}
-          trialEnded={subscription.trial}
+          daysUntilDeletion={daysUntilDeletion}
         />
       </div>
     </div>
