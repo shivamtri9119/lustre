@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Menu, Bell, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { NewAppointmentDialog } from "@/components/appointments/new-appointment-dialog";
+import { NotificationsDropdown } from "@/components/dashboard/notifications-dropdown";
 import { initials } from "@/lib/utils";
 import type { Role } from "@/lib/types";
 import type { SubscriptionState } from "@/lib/subscription";
@@ -61,8 +62,7 @@ export function Topbar({ subscription }: { subscription?: SubscriptionState }) {
       {role === "OWNER" && subscription?.currentPeriodEnd && (
         <span className="hidden items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-xs text-muted md:inline-flex">
           <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-          {subscription.trial ? "Free trial ends" : "Renews"}{" "}
-          {formatRenewalDate(subscription.currentPeriodEnd)}
+          Renews {formatRenewalDate(subscription.currentPeriodEnd)}
         </span>
       )}
 
@@ -79,11 +79,7 @@ export function Topbar({ subscription }: { subscription?: SubscriptionState }) {
 
       <NewAppointmentDialog />
 
-      <Button variant="ghost" size="icon" className="relative">
-        <Bell className="h-4.5 w-4.5" />
-        <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-gold" />
-        <span className="sr-only">Notifications</span>
-      </Button>
+      <NotificationsDropdown />
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
