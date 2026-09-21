@@ -61,6 +61,7 @@ enum NotificationChannel {
   EMAIL
   SMS
   WHATSAPP
+  IN_APP // staff-facing, shown in the dashboard bell — never sent externally
 }
 
 enum NotificationEvent {
@@ -68,6 +69,7 @@ enum NotificationEvent {
   APPOINTMENT_REMINDER
   INVOICE_SENT
   PAYMENT_CONFIRMATION
+  NEW_BOOKING_ALERT // staff-facing: "a customer just booked" (IN_APP channel only)
 }
 
 enum NotificationStatus {
@@ -85,10 +87,6 @@ enum NotificationStatus {
 model Salon {
   id        String   @id @default(cuid())
   name      String
-  // The salon's own public booking link: /book/<slug>. Nullable so salons
-  // created before this column existed keep working; they get one the first
-  // time the owner opens the dashboard (see ensureSalonSlug).
-  slug      String?  @unique
   address   String
   phone     String
   email     String
@@ -130,9 +128,6 @@ model Subscription {
   plan              SubscriptionPlan
   status            SubscriptionStatus @default(ACTIVE)
   currentPeriodEnd  DateTime
-  // true while the salon is on the free trial (no payment yet). Flipped to
-  // false by /api/billing/verify the moment a real payment is verified.
-  isTrial           Boolean            @default(false)
   razorpayOrderId   String?
   razorpayPaymentId String?
   createdAt         DateTime           @default(now())
@@ -147,10 +142,6 @@ model User {
   id            String    @id @default(cuid())
   name          String
   email         String    @unique
-  // Auth.js Prisma adapter writes these two on every OAuth sign-in; the
-  // adapter throws "Unknown argument `image`" if either column is missing.
-  emailVerified DateTime?
-  image         String?
   passwordHash  String? // null when the account only uses Google OAuth
   // Defaults to CUSTOMER because the Auth.js Prisma adapter creates this
   // row itself on a brand-new OAuth (Google) sign-in and only populates
@@ -268,7 +259,16 @@ model Staff {
   role            String
   phone           String
   email           String
-  workingHours    String
+  workingHours    String // free-text display, e.g. "9:00 AM - 6:00 PM" — shown in the UI
+  // The actual values the booking system computes slots from. Kept
+  // separate from the free-text field above on purpose: parsing arbitrary
+  // text like "9-6" or "Mon-Sat 10 to 7" reliably isn't worth the risk of
+  // silently getting it wrong for a field that gates real bookings.
+  // Default (600, 1140) = 10:00 AM-7:00 PM, matching the old hardcoded
+  // salon-wide window, so existing staff rows keep behaving exactly as
+  // before until an owner sets real hours for them.
+  workStartMinutes Int        @default(600)
+  workEndMinutes   Int        @default(1140)
   skills          String[]    @default([])
   rating          Float       @default(5)
   commissionRate  Float       @default(10) // percent
@@ -480,10 +480,11 @@ model Notification {
   salon     Salon               @relation(fields: [salonId], references: [id], onDelete: Cascade)
   channel   NotificationChannel
   event     NotificationEvent
-  recipient String // phone or email depending on channel
+  recipient String // phone or email depending on channel; "staff" for IN_APP
   status    NotificationStatus  @default(QUEUED)
   payload   Json?
   sentAt    DateTime?
+  readAt    DateTime? // only meaningful for IN_APP; null = unread
   createdAt DateTime            @default(now())
 
   @@index([salonId, createdAt])
