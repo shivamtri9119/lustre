@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,8 +34,9 @@ export function OnboardingForm({ trialDays }: { trialDays: number }) {
     // the server re-read the user (now OWNER, with a salon) into the token
     // so the dashboard opens without a second login.
     await update();
-    router.push("/dashboard");
-    router.refresh();
+    // The session token was issued before the salon existed. update() makes
+    // the server re-read the user (now OWNER, with a salon) into the token
+    // so the dashboard opens without a second login.
   }
 
   return (
