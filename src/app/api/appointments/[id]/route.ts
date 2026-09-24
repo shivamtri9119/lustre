@@ -10,11 +10,15 @@ import { requireSalonSession, handleApiError, ForbiddenError } from "@/lib/sessi
  * the appointment existed in Postgres but the UI only ever looked at the
  * mock Context, which never had it.
  */
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await requireSalonSession();
+    const { id } = await params;
     const appointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { customer: true, staff: true, service: true, invoice: true },
     });
     if (!appointment || appointment.salonId !== session.salonId) {
@@ -34,10 +38,14 @@ const patchSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await requireSalonSession(["OWNER", "RECEPTIONIST"]);
-    const existing = await prisma.appointment.findUnique({ where: { id: params.id } });
+    const { id } = await params;
+    const existing = await prisma.appointment.findUnique({ where: { id } });
     if (!existing || existing.salonId !== session.salonId) {
       throw new ForbiddenError("Appointment not found for this salon");
     }
@@ -74,7 +82,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     const appointment = await prisma.appointment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(status ? { status } : {}),
         ...(date ? { date: new Date(`${date}T00:00:00`) } : {}),
