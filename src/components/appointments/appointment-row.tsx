@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MoreHorizontal, Clock, Pencil } from "lucide-react";
+import { MoreHorizontal, Clock, Pencil, Phone } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,16 @@ export function AppointmentRow({ appointment }: { appointment: Appointment }) {
           <p className="truncate text-xs text-muted">
             {appointment.serviceName} · {appointment.staffName} · {appointment.durationMinutes} min
           </p>
+          {appointment.customerPhone && (
+            <a
+              href={`tel:${appointment.customerPhone}`}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-0.5 flex items-center gap-1 text-xs text-muted hover:text-gold-deep hover:underline"
+            >
+              <Phone className="h-3 w-3" />
+              {appointment.customerPhone}
+            </a>
+          )}
         </div>
 
         <p className="hidden text-sm font-medium text-ink-soft sm:block">
