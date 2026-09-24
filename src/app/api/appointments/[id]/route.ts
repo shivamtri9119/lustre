@@ -1,27 +1,46 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireSalonSession, handleApiError } from "@/lib/session-guard";
-import { hasConflict } from "@/lib/scheduling";
+import { requireSalonSession, handleApiError, ForbiddenError } from "@/lib/session-guard";
 
-const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+/**
+ * GET here is specifically what "view details from notification" needs —
+ * the notification stores an appointmentId, and clicking it should load
+ * that one real appointment. Previously there was nothing for it to call:
+ * the appointment existed in Postgres but the UI only ever looked at the
+ * mock Context, which never had it.
+ */
+export async function GET(_req: Request, { params }: { params: { id: string } }) {
+  try {
+    const session = await requireSalonSession();
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: params.id },
+      include: { customer: true, staff: true, service: true, invoice: true },
+    });
+    if (!appointment || appointment.salonId !== session.salonId) {
+      throw new ForbiddenError("Appointment not found for this salon");
+    }
+    return NextResponse.json(appointment);
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
 
 const patchSchema = z.object({
   status: z.enum(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"]).optional(),
-  date: z.string().regex(dateRegex).optional(),
-  time: z.string().regex(timeRegex).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  staffId: z.string().optional(),
+  notes: z.string().optional(),
 });
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
-    const { salonId } = await requireSalonSession(["OWNER", "RECEPTIONIST", "STYLIST"]);
-    const { id } = await params;
-
-    // Scoped by salonId here too — requesting another salon's appointment
-    // ID 404s instead of leaking whether it exists.
-    const appointment = await prisma.appointment.findFirst({ where: { id, salonId } });
-    if (!appointment) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const session = await requireSalonSession(["OWNER", "RECEPTIONIST"]);
+    const existing = await prisma.appointment.findUnique({ where: { id: params.id } });
+    if (!existing || existing.salonId !== session.salonId) {
+      throw new ForbiddenError("Appointment not found for this salon");
+    }
 
     const body = await req.json();
     const parsed = patchSchema.safeParse(body);
@@ -31,42 +50,42 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         { status: 400 }
       );
     }
-    const input = parsed.data;
-    const isReschedule = input.date !== undefined || input.time !== undefined;
-    const nextDate = input.date ?? appointment.date.toISOString().slice(0, 10);
-    const nextTime = input.time ?? appointment.time;
+    const { status, date, time, staffId, notes } = parsed.data;
 
-    if (isReschedule) {
-      // The old reschedule-dialog.tsx -> reschedule() had zero conflict
-      // check at all. This is that check, applied to the new slot, with
-      // the appointment excluded from conflicting with its own old slot.
-      const existing = await prisma.appointment.findMany({
+    // Rescheduling (date/time/staff changing) re-checks the same
+    // double-booking guard the create route uses.
+    if (date || time || staffId) {
+      const nextDate = date ? new Date(`${date}T00:00:00`) : existing.date;
+      const nextTime = time ?? existing.time;
+      const nextStaffId = staffId ?? existing.staffId;
+      const conflict = await prisma.appointment.findFirst({
         where: {
-          salonId,
-          staffId: appointment.staffId,
-          date: new Date(nextDate),
+          salonId: session.salonId,
+          staffId: nextStaffId,
+          date: nextDate,
+          time: nextTime,
           status: { not: "CANCELLED" },
+          id: { not: existing.id },
         },
-        select: { id: true, time: true, durationMinutes: true },
       });
-      if (hasConflict(nextTime, appointment.durationMinutes, existing, appointment.id)) {
-        return NextResponse.json(
-          { error: "That staff member already has an appointment overlapping the new time." },
-          { status: 409 }
-        );
+      if (conflict) {
+        return NextResponse.json({ error: "That slot is already booked" }, { status: 409 });
       }
     }
 
-    const updated = await prisma.appointment.update({
-      where: { id: appointment.id },
+    const appointment = await prisma.appointment.update({
+      where: { id: params.id },
       data: {
-        ...(input.status ? { status: input.status } : {}),
-        ...(isReschedule ? { date: new Date(nextDate), time: nextTime } : {}),
+        ...(status ? { status } : {}),
+        ...(date ? { date: new Date(`${date}T00:00:00`) } : {}),
+        ...(time ? { time } : {}),
+        ...(staffId ? { staffId } : {}),
+        ...(notes !== undefined ? { notes } : {}),
       },
       include: { customer: true, staff: true, service: true },
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json(appointment);
   } catch (err) {
     return handleApiError(err);
   }
