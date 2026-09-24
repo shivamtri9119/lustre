@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function OnboardingForm({ trialDays }: { trialDays: number }) {
-  const router = useRouter();
   const { update } = useSession();
   const [salonName, setSalonName] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
