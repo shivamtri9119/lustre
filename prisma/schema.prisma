@@ -375,6 +375,8 @@ model Invoice {
   paymentStatus   PaymentStatus @default(PENDING)
   paymentMethod   PaymentMethod
   pdfUrl          String? // Cloudinary URL once generated
+  pdfPublicId     String? // Cloudinary public_id, needed to delete the file later
+  pdfExpiresAt    DateTime? // 30 days after upload — see /api/cron/cleanup-expired-invoices
   emailSent       Boolean       @default(false)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
