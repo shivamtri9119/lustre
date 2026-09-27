@@ -105,6 +105,8 @@ export interface Appointment {
   price: number;
   status: AppointmentStatus;
   notes?: string;
+  invoiceId?: string | null;
+  invoicePdfUrl?: string | null;
 }
 
 export interface InvoiceLineItem {
