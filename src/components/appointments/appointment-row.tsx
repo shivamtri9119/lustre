@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MoreHorizontal, Clock, Pencil, Phone } from "lucide-react";
+import { MoreHorizontal, Clock, Pencil, Phone, FileText } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { RescheduleDialog } from "@/components/appointments/reschedule-dialog";
+import { InvoiceDialog } from "@/components/appointments/invoice-dialog";
 import { initials, formatCurrency } from "@/lib/utils";
 import { useAppointments } from "@/lib/appointments-store";
 import type { Appointment, AppointmentStatus } from "@/lib/types";
@@ -25,9 +26,11 @@ const statusVariant: Record<AppointmentStatus, "pending" | "confirmed" | "comple
 };
 
 export function AppointmentRow({ appointment }: { appointment: Appointment }) {
-  const { updateStatus } = useAppointments();
+  const { updateStatus, refresh } = useAppointments();
   const [rescheduleOpen, setRescheduleOpen] = React.useState(false);
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = React.useState(false);
   const isFinal = appointment.status === "COMPLETED" || appointment.status === "CANCELLED";
+  const hasInvoice = Boolean(appointment.invoiceId);
 
   return (
     <>
@@ -87,6 +90,24 @@ export function AppointmentRow({ appointment }: { appointment: Appointment }) {
               <Pencil className="h-3.5 w-3.5" />
               Reschedule
             </DropdownMenuItem>
+            {hasInvoice ? (
+              <DropdownMenuItem asChild>
+                <a
+                  href={appointment.invoicePdfUrl ?? "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => { if (!appointment.invoicePdfUrl) e.preventDefault(); }}
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  View invoice
+                </a>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={() => setInvoiceDialogOpen(true)}>
+                <FileText className="h-3.5 w-3.5" />
+                Generate invoice
+              </DropdownMenuItem>
+            )}
             {!isFinal && (
               <>
                 <DropdownMenuSeparator />
@@ -106,6 +127,14 @@ export function AppointmentRow({ appointment }: { appointment: Appointment }) {
         appointment={appointment}
         open={rescheduleOpen}
         onOpenChange={setRescheduleOpen}
+      />
+
+      <InvoiceDialog
+        appointmentId={appointment.id}
+        appointmentPrice={appointment.price}
+        open={invoiceDialogOpen}
+        onOpenChange={setInvoiceDialogOpen}
+        onCreated={refresh}
       />
     </>
   );
