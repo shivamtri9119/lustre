@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSalonSession, handleApiError, ForbiddenError } from "@/lib/session-guard";
+import { createInvoiceForAppointment, storeInvoiceCopy } from "@/lib/invoice-service";
 
 /**
  * GET here is specifically what "view details from notification" needs —
@@ -90,8 +91,37 @@ export async function PATCH(
         ...(staffId ? { staffId } : {}),
         ...(notes !== undefined ? { notes } : {}),
       },
-      include: { customer: true, staff: true, service: true },
+      include: { customer: true, staff: true, service: true, invoice: true },
     });
+
+    // Auto-invoicing: only fires on a transition INTO COMPLETED (not every
+    // PATCH), and only if this appointment doesn't already have one —
+    // covers both "already completed, editing notes" and "manual invoice
+    // was already generated before completion" without a duplicate. Kept
+    // out of the main transaction above deliberately: a PDF/Cloudinary
+    // hiccup should never make the status update itself fail — the staff
+    // member marked the appointment done, that must succeed regardless.
+    if (status === "COMPLETED" && !appointment.invoice) {
+      try {
+        const invoice = await createInvoiceForAppointment(appointment.id, {
+          discount: 0,
+          gstRate: 0.05,
+          // No payment-method signal exists on Appointment yet, so this
+          // is a placeholder assumption — flag to me if auto-completed
+          // appointments should default to something else, or if this
+          // should come from the request body instead.
+          paymentMethod: "CASH",
+        });
+        const withPdf = await storeInvoiceCopy(invoice.id);
+        // The response below must reflect the invoice we just created —
+        // `appointment` was fetched before it existed, so attach it here
+        // rather than returning stale data the client would only see
+        // after a separate refresh.
+        return NextResponse.json({ ...appointment, invoice: withPdf });
+      } catch (err) {
+        console.error(`Auto-invoice failed for appointment ${appointment.id}:`, err);
+      }
+    }
 
     return NextResponse.json(appointment);
   } catch (err) {
