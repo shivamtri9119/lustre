@@ -38,7 +38,7 @@ export async function GET(req: Request) {
         ...(date ? { date: new Date(`${date}T00:00:00`) } : {}),
         ...(staffId ? { staffId } : {}),
       },
-      include: { customer: true, staff: true, service: true },
+      include: { customer: true, staff: true, service: true, invoice: true },
       orderBy: [{ date: "asc" }, { time: "asc" }],
     });
 
